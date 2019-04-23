@@ -1,4 +1,4 @@
-
+<h1>Focalloss</h1>
 
 [TOC]
 
@@ -20,7 +20,7 @@ Focal loss：
 $$
 \mathrm{L}_{f l}=\left\{\begin{array}{ll}{-\left(1-y^{\prime}\right)^{\gamma} \log y^{\prime}} & {y=1} \\ {-y^{\prime \gamma} \log \left(1-y^{\prime}\right),} & {y=0}\end{array}\right.
 $$
-![pogrc](C:\Users\saber\Documents\md\Focalloss.assets\pogtc.png)
+![pogrc](Focalloss.assets\pogtc.png)
 
 首先在原有的基础上加了一个因子，其中$\gamma > 0$  减少易分类样本的损失，更关注困难的、错分的样本。
 
@@ -28,3 +28,25 @@ $$
 
 此外，加入平衡因子alpha，用来平衡正负样本本身的比例不均：
 
+$$
+\mathrm{L}_{f l}=\left\{\begin{array}{ll}{-\alpha\left(1-y^{\prime}\right)^{\gamma} \log y^{\prime}} & {y=1} \\ {-(1-\alpha) y^{\prime \gamma} \log \left(1-y^{\prime}\right),} & {y=0}\end{array}\right.
+$$
+只添加alpha虽然可以平衡正负样本的重要性，多少无法解决简单与困难样本的问题。
+
+lambda调节简单样本权重降低的速率，当lambda为0时即为交叉熵损失函数，当lambda增加是，调整因子的影响也在增加。实验发现lambda为2是最优的。
+
+# 3.Conclusion
+
+作者认为one-stage和two-stage的表现差异主要原因是大量前景背景类别不平衡导致。作者设计了一个简单密集型网络RetinaNet来训练在保证速度的同时达到了精度最优。在双阶段算法中，在候选框阶段，通过得分和nms筛选过滤掉了大量的负样本，然后在分类回归阶段又固定了正负样本比例，或者通过OHEM在线困难挖掘使得前景和背景相对平衡。而one-stage阶段需要产生约100k的候选位置，虽然有类似的采样，但是训练仍然被大量负样本所主导。
+
+# 4. 附录
+
+## 4.1 交叉熵
+
+
+
+## 4.2 one-stage 和 two-stage
+
+
+
+## 4.3 OHEM
