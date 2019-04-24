@@ -43,7 +43,85 @@ lambda调节简单样本权重降低的速率，当lambda为0时即为交叉熵�
 
 ## 4.1 交叉熵
 
+### 信息论
 
+交叉熵是信息论中的一个概念，要想了解交叉熵的本质，需要从最基本的概念讲起。
+
+### 4.1.1 信息量
+
+假设$X$ 是一个离散型随机变量，取其值集合为$\mathcal{X}$ ，概率分布函数 
+$$
+p(x)=\operatorname{Pr}(X=x), x \in \chi
+$$
+定义事件 $X=x_0$ 的信息量为：
+$$
+I\left(x_{0}\right)=-\log \left(p\left(x_{0}\right)\right)
+$$
+
+### 4.1.2 熵
+
+表示所有信息量的期望，即：
+$$
+H(X)=-\sum_{i=1}^{n} p\left(x_{i}\right) \log \left(p\left(x_{i}\right)\right)
+$$
+对于0-1分布问题，有：
+$$
+\begin{aligned} H(X) &=-\sum_{i=1}^{n} p\left(x_{i}\right) \log \left(p\left(x_{i}\right)\right) \\ &=-p(x) \log (p(x))-(1-p(x)) \log (1-p(x)) \end{aligned}
+$$
+
+### 4.1.3 相对熵（KL散度）
+
+参考代码：https://github.com/thushv89/exercises_thushv_dot_com/blob/master/kl_divergence.ipynb
+
+博客：https://www.jianshu.com/p/7b7c0777f74d
+
+相对熵又称KL散度,如果我们对于同一个随机变量 x 有两个单独的概率分布 P(x) 和 Q(x)，我们可以使用 KL 散度（Kullback-Leibler (KL) divergence）来衡量这两个分布的差异，两个分布的差异越大，KL散度越大
+
+维基百科对相对熵的定义：
+
+> In the context of machine learning, DKL(P‖Q) is often called the information gain achieved if P is used instead of Q.
+
+即如果用P来描述目标问题，而不是用Q来描述目标问题，得到的==信息增量==。
+
+在机器学习中，P往往用来表示样本的真实分布，比如[1,0,0]表示当前样本属于第一类。Q用来表示模型所预测的分布，比如[0.7,0.2,0.1] 
+直观的理解就是如果用P来描述样本，那么就非常完美。而用Q来描述样本，虽然可以大致描述，但是不是那么的完美，信息量不足，需要额外的一些“信息增量”才能达到和P一样完美的描述。如果我们的Q通过反复训练，也能完美的描述样本，那么就不再需要额外的“信息增量”，Q等价于P。
+
+KL散度的计算公式：
+$$
+D_{K L}(p \| q)=\sum_{i=1}^{n} p\left(x_{i}\right) \log \left(\frac{p\left(x_{i}\right)}{q\left(x_{i}\right)}\right)
+$$
+$n​$ 为事件的所有可能性，其中p(x)是目标分布，q(x)是去匹配的分布，如果两个分布完全匹配，那么
+$$
+D_{K L}(p \| q)=0
+$$
+
+
+$D_{KL}$的值越小，表示q分布和p分布越接近,KL 散度是一种衡量两个分布（比如两条线）之间的匹配程度的方法。
+
+
+
+### 4.1.4 交叉熵
+
+$$
+\begin{aligned} D_{K L}(p \| q) &=\sum_{i=1}^{n} p\left(x_{i}\right) \log \left(p\left(x_{i}\right)\right)-\sum_{i=1}^{n} p\left(x_{i}\right) \log \left(q\left(x_{i}\right)\right) \\ &=-H(p(x))+\left[-\sum_{i=1}^{n} p\left(x_{i}\right) \log \left(q\left(x_{i}\right)\right)\right] \end{aligned}
+$$
+
+等式的前一部分恰巧就是p的熵，等式的后一部分，就是交叉熵： 
+$$
+H(p, q)=-\sum_{i=1}^{n} p\left(x_{i}\right) \log \left(q\left(x_{i}\right)\right)
+$$
+
+在机器学习中，我们需要评估label和predicts之间的差距，使用KL散度刚刚好，即DKL(y||y^)，由于KL散度中的前一部分−H(y)不变，故在优化过程中，只需要关注交叉熵就可以了。所以一般在机器学习中直接用用交叉熵做loss，评估模型。
+
+机器学习中常常使用你MSE作为loss函数:
+$$
+\operatorname{loss}=\frac{1}{2 m} \sum_{i=1}^{m}\left(y_{i}-\hat{y}_{i}\right)^{2}
+$$
+使用交叉熵则变为：
+$$
+loss=-\frac{1}{m} \sum_{j=1}^{m} \sum_{i=1}^{n} y_{j i} \log \left(\hat{y_{j i}}\right)
+$$
+m为当前batch的样本数
 
 ## 4.2 one-stage 和 two-stage
 
