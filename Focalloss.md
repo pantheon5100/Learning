@@ -90,7 +90,7 @@ KL散度的计算公式：
 $$
 D_{K L}(p \| q)=\sum_{i=1}^{n} p\left(x_{i}\right) \log \left(\frac{p\left(x_{i}\right)}{q\left(x_{i}\right)}\right)
 $$
-$n​$ 为事件的所有可能性，其中p(x)是目标分布，q(x)是去匹配的分布，如果两个分布完全匹配，那么
+$n$ 为事件的所有可能性，其中p(x)是目标分布，q(x)是去匹配的分布，如果两个分布完全匹配，那么
 $$
 D_{K L}(p \| q)=0
 $$
@@ -123,8 +123,8 @@ loss=-\frac{1}{m} \sum_{j=1}^{m} \sum_{i=1}^{n} y_{j i} \log \left(\hat{y_{j i}}
 $$
 m为当前batch的样本数
 
-## 4.2 one-stage 和 two-stage
 
 
+## 4.2 OHEM
 
-## 4.3 OHEM
+[参考链接](https://blog.csdn.net/wfei101/article/details/78067257)

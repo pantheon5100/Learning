@@ -308,3 +308,31 @@ for epoch in range(num_epoches):
 
 # 6. 获取网络的任意一层的输出
 
+![check f](C:\Users\saber\Documents\agit\Learning\torch trick pic\check feature.jpg)
+
+```python
+    # load model and data
+    model = P3D199()
+    model = model.cuda()
+    model.eval()
+    data=torch.autograd.Variable(torch.rand(16,3,16,160,160)).cuda() 
+    # verify
+    out=model(data)
+    feature=model.feature
+    out2=model.fc(feature)
+    print(out==out2) 
+```
+
+
+
+# 7.设置随机种子
+
+```python
+def setup_seed(seed):
+     torch.manual_seed(seed)
+     torch.cuda.manual_seed_all(seed)
+     np.random.seed(seed)
+     random.seed(seed)
+     torch.backends.cudnn.deterministic = True
+```
+
