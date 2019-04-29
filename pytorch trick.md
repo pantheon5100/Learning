@@ -336,3 +336,11 @@ def setup_seed(seed):
      torch.backends.cudnn.deterministic = True
 ```
 
+
+
+# 8. 如何在训练时固定一些层？Pytorch迁移学习小技巧 以及 Pytorch小技巧的一些总结
+
+[参考1](https://blog.csdn.net/VictoriaW/article/details/72779407)
+
+[参考2](https://blog.csdn.net/u011268787/article/details/80170482)
+
