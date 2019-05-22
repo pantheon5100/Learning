@@ -344,3 +344,213 @@ def setup_seed(seed):
 
 [参考2](https://blog.csdn.net/u011268787/article/details/80170482)
 
+
+
+# 9.nn.ReLU() nn.ReLU(inplace=True)
+
+inplace=True
+计算结果不会有影响。利用inplace计算**可以节省内（显）存**，同时还可以省去反复申请和释放内存的时间。但是会对原变量覆盖，只要不带来错误就用。
+
+# 10. pytoch 模型保存加载
+
+参考: [PyTorch之保存加载模型](https://www.jianshu.com/p/4905bf8e06e5)
+
+3个核心功能
+
+1. torch.save : 将序列化的对象保存到disk。这个函数使用Python的pickle实用程序进行序列化。使用这个函数可以保存各种对象的模型、张量和字典。
+2. torch.load : 使用pickle unpickle工具将pickle的对象文件反序列化为内存。
+3. torch.nn.Module.load_state_dict : 使用反序列化状态字典加载model’s参数字典。
+
+## 10.1 What is a state_dict
+
+在PyTorch中，torch.nn.Module的可学习参数(即权重和偏差)，模块模型包含在model's参数中(通过model.parameters()访问)。state_dict是个简单的Python dictionary对象，它将每个层映射到它的参数张量。
+ 注意，只有具有可学习参数的层(卷积层、线性层等)才有model's state_dict中的条目。优化器对象(connector .optim)也有一个state_dict，其中包含关于优化器状态以及所使用的超参数的信息。
+
+Example:
+
+```python
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+# Define model
+class TheModelClass(nn.Module):
+    def __init__(self):
+        super(TheModelClass,self).__init__()
+        self.conv1=nn.Conv2d(3,6,5)
+        self.pool=nn.MaxPool2d(2,2)
+        self.conv2=nn.Conv2d(6,16,5)
+        self.fc1=nn.Linear(16*5*5,120)
+        self.fc2=nn.Linear(120,84)
+        self.fc3=nn.Linear(84,10)
+    def farward(self,x):
+        x=self.pool(F.relu(self.conv1(x)))
+        x=self.pool(F.relu(self.conv2(x)))
+        x=x.view(-1,16*5*5)
+        x=F.relu(self.fc1(x))
+        x=F.relu(self.fc2(x))
+        x=self.fc3(x)
+        return x
+# Initialize model
+model=TheModelClass()
+# Initialize optimizer
+optimizer=torch.optim.SGD(model.parameters(),lr=1e-4,momentum=0.9)
+
+print("Model's state_dict:")
+# Print model's state_dict
+for param_tensor in model.state_dict():
+    print(param_tensor,"\t",model.state_dict()[param_tensor].size())
+print("optimizer's state_dict:")
+# Print optimizer's state_dict
+for var_name in optimizer.state_dict():
+    print(var_name,"\t",optimizer.state_dict()[var_name])
+```
+
+Output:
+
+```python
+Model's state_dict:
+conv1.weight     torch.Size([6, 3, 5, 5])
+conv1.bias   torch.Size([6])
+conv2.weight     torch.Size([16, 6, 5, 5])
+conv2.bias   torch.Size([16])
+fc1.weight   torch.Size([120, 400])
+fc1.bias     torch.Size([120])
+fc2.weight   torch.Size([84, 120])
+fc2.bias     torch.Size([84])
+fc3.weight   torch.Size([10, 84])
+fc3.bias     torch.Size([10])
+optimizer's state_dict:
+state    {}
+param_groups     [{'lr': 0.0001, 'momentum': 0.9, 'dampening': 0, 'weight_decay': 0, 'nesterov': False, 'params': [1310469552240, 1310469552384, 1310469552456, 1310469552528, 1310469552600, 1310469552672, 1310469552744, 1310469552816, 1310469552888, 1310469552960]}]
+```
+
+## 10.2 Saving & Loading model for inference
+
+==Save/Load state_dict(Recommended)==
+
++ Save:
+
+```python
+torch.save(model.state_dict, PATH)
+```
+
+在保存模型进行推理时，只需要保存训练过的模型的学习参数即可。一个常见的PyTorch约定是使用.pt或.pth文件扩展名保存模型。
+
++ Load:
+
+```python
+model = TheModelClass(*args, **kwargs)
+model.load_state_dict(torch.load(PATH))
+model.eval()
+```
+
+记住，您必须调用model.eval()，以便在运行推断之前将dropout和batch规范化层设置为评估模式。如果不这样做，将会产生不一致的推断结果
+
+> ```
+> 注意，load_state_dict()函数接受一个dictionary对象，而不是保存对象的路径。这意味着您必须在将保存的state_dict传至load_state_dict()函数之前反序列化它。
+> ```
+
+==Save/Load Entire Model==
+
++ Save:
+
+```python
+torch.save(model, PATH)
+```
+
++ Load:
+
+```python
+# Model class must be defined somewhere
+model = torch.load(PATH)
+model.eval()
+```
+
+##  10.3 Save & Load model checkpoint
+
++ Save:
+
+```python
+torch.save({
+    'epoch': epoch,
+    'model_state_dict': model.state_dict(),
+    'optimizer_state_dict': optimizer.state_dict(),
+    'loss': loss,
+    ...
+}, PATH)
+```
+
++ Load:
+
+```python
+model = TheModelClass(*args, **kwargs)
+optimizer = TheOptimizerClass(*args, **kwargs)
+
+checkpoint = torch.load(PATH)
+model.load_state_dict(checkpoint['model_state_dict'])
+optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+epoch = checkpoint['epoch']
+loss = checkpoint['loss']
+
+model.eval()
+# - or -
+model.train()
+```
+
+在保存用于推理或恢复训练的通用检查点时，必须保存模型的state_dict。另外，保存优化器的state_dict也是很重要的，因为它包含缓冲区和参数，这些缓冲区和参数是在模型训练时更新的。要保存多个组件，请将它们组织在字典中，并使用torch.save()序列化字典。一个常见的PyTorch约定是使用.tar文件扩展名保存这些检查点。
+
+## 10.4 Saving & Loading model across devices
+
+==Save on GPU, Load on CPU==
+
++ Save:
+
+```python
+torhch.save(model.state_dict(), PATH)
+```
+
++ Load: 
+
+```python
+device = torch.device('cpu')
+model = TheModelClass(*args, **kwargs)
+model.load_state_dict(torch.load(PATH, map_location=device))
+```
+
+==Save on GPU, Load on GPU==
+
++ Save:
+
+```python
+torch.save(model.state_dict(), PATH)
+```
+
++ Load:
+
+```python
+device = torch.device("cuda")
+model = TheModelClass(*args, **kwargs)
+model.load_state_dict(torch.load(PATH))
+model.to(device)
+ # Make sure to call input = input.to(device) on any input tensors that you feed to the model
+```
+
+==Save on CPU, Load on GPU==
+
++ Save:  As above
++ Load:
+
+```python
+device = torch.device("cuda")
+model = TheModelClass(*args, **kwargs)
+model.load_state_dict(torch.load(PATH, map_location="cuda:0"))
+# Choose whatever GPU device number you want
+model.to(device)
+# Make sure to call input = input.to(device) on any input tensors that you feed to the model
+```
+
+==Saving torch.nn.DataParallel Models==
+
++ Save: As above
+
+torch.nn.DataParallel是支持并行GPU使用的模型包装器。为了节省DataParallel模型属性,保存model.module.state_dict()。通过这种方式，您可以灵活地以任何方式加载模型以加载任何设备。
